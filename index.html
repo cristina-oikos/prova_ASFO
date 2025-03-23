@@ -1,0 +1,1971 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="initial-scale=1,user-scalable=no,maximum-scale=1,width=device-width">
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <link rel="stylesheet" href="css/leaflet.css">
+        <link rel="stylesheet" href="css/L.Control.Layers.Tree.css">
+        <link rel="stylesheet" href="css/L.Control.Locate.min.css">
+        <link rel="stylesheet" href="css/qgis2web.css">
+        <link rel="stylesheet" href="css/fontawesome-all.min.css">
+        <link rel="stylesheet" href="css/leaflet-control-geocoder.Geocoder.css">
+        <link rel="stylesheet" href="css/leaflet-measure.css">
+        <style>
+        html, body, #map {
+            width: 100%;
+            height: 100%;
+            padding: 0;
+            margin: 0;
+        }
+        </style>
+        <title></title>
+    </head>
+    <body>
+        <div id="map">
+        </div>
+        <script src="js/qgis2web_expressions.js"></script>
+        <script src="js/leaflet.js"></script>
+        <script src="js/L.Control.Layers.Tree.min.js"></script>
+        <script src="js/L.Control.Locate.min.js"></script>
+        <script src="js/leaflet.rotatedMarker.js"></script>
+        <script src="js/leaflet.pattern.js"></script>
+        <script src="js/leaflet-hash.js"></script>
+        <script src="js/Autolinker.min.js"></script>
+        <script src="js/rbush.min.js"></script>
+        <script src="js/labelgun.min.js"></script>
+        <script src="js/labels.js"></script>
+        <script src="js/leaflet-control-geocoder.Geocoder.js"></script>
+        <script src="js/leaflet-measure.js"></script>
+        <script src="data/tipologieforestali_2.js"></script>
+        <script src="data/provinciaVarese_3.js"></script>
+        <script src="data/comuniASFO_4.js"></script>
+        <script src="data/cantieri_5.js"></script>
+        <script src="data/sentieri_OSM_6.js"></script>
+        <script>
+        var map = L.map('map', {
+            zoomControl:false, maxZoom:28, minZoom:1
+        }).fitBounds([[45.75319764648268,8.61788519568662],[45.93645881854537,8.96438317529045]]);
+        var hash = new L.Hash(map);
+        map.attributionControl.setPrefix('<a href="https://github.com/tomchadwin/qgis2web" target="_blank">qgis2web</a> &middot; <a href="https://leafletjs.com" title="A JS library for interactive maps">Leaflet</a> &middot; <a href="https://qgis.org">QGIS</a>');
+        var autolinker = new Autolinker({truncate: {length: 30, location: 'smart'}});
+        // remove popup's row if "visible-with-data"
+        function removeEmptyRowsFromPopupContent(content, feature) {
+         var tempDiv = document.createElement('div');
+         tempDiv.innerHTML = content;
+         var rows = tempDiv.querySelectorAll('tr');
+         for (var i = 0; i < rows.length; i++) {
+             var td = rows[i].querySelector('td.visible-with-data');
+             var key = td ? td.id : '';
+             if (td && td.classList.contains('visible-with-data') && feature.properties[key] == null) {
+                 rows[i].parentNode.removeChild(rows[i]);
+             }
+         }
+         return tempDiv.innerHTML;
+        }
+        // add class to format popup if it contains media
+		function addClassToPopupIfMedia(content, popup) {
+			var tempDiv = document.createElement('div');
+			tempDiv.innerHTML = content;
+			if (tempDiv.querySelector('td img')) {
+				popup._contentNode.classList.add('media');
+					// Delay to force the redraw
+					setTimeout(function() {
+						popup.update();
+					}, 10);
+			} else {
+				popup._contentNode.classList.remove('media');
+			}
+		}
+        var zoomControl = L.control.zoom({
+            position: 'topleft'
+        }).addTo(map);
+        L.control.locate({locateOptions: {maxZoom: 19}}).addTo(map);
+        var measureControl = new L.Control.Measure({
+            position: 'topleft',
+            primaryLengthUnit: 'meters',
+            secondaryLengthUnit: 'kilometers',
+            primaryAreaUnit: 'sqmeters',
+            secondaryAreaUnit: 'hectares'
+        });
+        measureControl.addTo(map);
+        document.getElementsByClassName('leaflet-control-measure-toggle')[0].innerHTML = '';
+        document.getElementsByClassName('leaflet-control-measure-toggle')[0].className += ' fas fa-ruler';
+        var bounds_group = new L.featureGroup([]);
+        function setBounds() {
+        }
+        map.createPane('pane_OpenStreetMap_0');
+        map.getPane('pane_OpenStreetMap_0').style.zIndex = 400;
+        var layer_OpenStreetMap_0 = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            pane: 'pane_OpenStreetMap_0',
+            opacity: 1.0,
+            attribution: '',
+            minZoom: 1,
+            maxZoom: 28,
+            minNativeZoom: 0,
+            maxNativeZoom: 19
+        });
+        layer_OpenStreetMap_0;
+        map.createPane('pane_GoogleSatellite_1');
+        map.getPane('pane_GoogleSatellite_1').style.zIndex = 401;
+        var layer_GoogleSatellite_1 = L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+            pane: 'pane_GoogleSatellite_1',
+            opacity: 1.0,
+            attribution: '',
+            minZoom: 1,
+            maxZoom: 28,
+            minNativeZoom: 0,
+            maxNativeZoom: 18
+        });
+        layer_GoogleSatellite_1;
+        map.addLayer(layer_GoogleSatellite_1);
+        function pop_tipologieforestali_2(feature, layer) {
+            var popupContent = '<table>\
+                    <tr>\
+                        <th scope="row">TIP_RL</th>\
+                        <td class="visible-with-data" id="TIP_RL">' + (feature.properties['TIP_RL'] !== null ? autolinker.link(String(feature.properties['TIP_RL']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">COD_RL</th>\
+                        <td class="visible-with-data" id="COD_RL">' + (feature.properties['COD_RL'] !== null ? autolinker.link(String(feature.properties['COD_RL']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">SHAPE_AREA</th>\
+                        <td class="visible-with-data" id="SHAPE_AREA">' + (feature.properties['SHAPE_AREA'] !== null ? autolinker.link(String(feature.properties['SHAPE_AREA']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_tipologieforestali_2_0(feature) {
+            switch(String(feature.properties['TIP_RL'])) {
+                case 'Aceri-frassineti ed Aceri-tiglieti non classificabili':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(108,225,57,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Aceri-frassineto con faggio':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(119,41,202,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Aceri-frassineto con ontano bianco':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(193,57,203,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Aceri-frassineto con ostria':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(221,36,42,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Aceri-frassineto tipico':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(232,80,222,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Aceri-frassineto tipico var. con carpino bianco':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(120,72,233,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Aceri-frassineto tipico var. con rovere':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(108,47,212,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Aceri-frassineto tipico var. con tigli':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(43,57,218,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Aceri-tiglieto':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(202,34,93,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Alneto di ontano bianco':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(29,147,202,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Alneto di ontano nero d\'impluvio':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(17,222,167,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Alneto di ontano nero perilacustre':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(213,50,159,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Alneto di ontano nero tipico':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(52,210,157,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Aree boscate non classificate':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(81,222,229,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Betuleti e Corileti non classificabili':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(66,201,25,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Betuleto primitivo':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(201,24,54,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Betuleto secondario':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(13,218,112,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Boschi di conifere a densita\' bassa DUSAF':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(172,235,72,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Boschi di conifere a densita\' media e alta DUSAF':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(209,172,70,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Boschi di latifoglie a densita\' bassa DUSAF':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(133,221,186,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Boschi di latifoglie a densita\' media e alta DUSAF':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(94,98,219,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Boschi misti a densita\' media e alta DUSAF':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(61,218,84,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Carpineto con ostria':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(102,209,223,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Castagneti non classificabili':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(71,207,110,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Castagneto dei substrati carbonatici dei suoli mesici':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(24,206,206,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Castagneto dei substrati carbonatici dei suoli mesoxerici':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(50,91,239,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Castagneto dei substrati carbonatici dei suoli xerici':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(203,61,148,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Castagneto dei substrati silicatici dei suoli mesici':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(132,213,33,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Castagneto dei substrati silicatici dei suoli mesoxerici':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(77,156,240,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Castagneto dei substrati silicatici dei suoli xerici':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(110,171,210,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Castagneto delle cerchie moreniche occidentali':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(233,174,79,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Castagneto delle cerchie moreniche occidentali var. con farnia':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(129,219,125,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Castagneto di falda detritica':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(146,118,239,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Cerreta':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(105,200,16,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Cespuglieti con presenza significativa di specie arbustive alte ed arboree DUSAF':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(183,212,67,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Corileto':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(44,102,211,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Faggeta montana dei substrati carbonatici tipica':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(141,40,204,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Faggeta montana dei substrati carbonatici tipica var. con abete rosso':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(16,72,213,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Faggeta montana dei substrati silicatici dei suoli acidi':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(216,45,39,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Faggeta montana dei substrati silicatici dei suoli mesici':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(201,20,177,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Faggeta primitiva':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(223,112,123,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Faggeta submontana dei substrati carbonatici':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(231,14,188,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Faggeta submontana dei substrati carbonatici var. dei suoli mesici':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(201,101,201,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Faggeta submontana dei substrati silicatici':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(214,94,144,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Faggeta submontana dei substrati silicatici var. con castagno':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(228,107,83,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Faggete non classificabili':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(41,190,240,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Formazioni a dominanza di latifoglie alloctone':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(217,17,127,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Formazioni antropogene non classificabili':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(117,131,213,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Formazioni arbustive a ginepro nano':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(223,111,238,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Formazioni di ciliegio tardivo':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(237,189,131,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Formazioni di pioppo tremulo':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(208,208,61,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Formazioni di sorbo degli uccellatori':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,190,230,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Formazioni particolari non classificabili':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(126,202,85,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Formazioni ripariali DUSAF':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(236,201,60,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Lariceto tipico':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(205,154,43,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Orno-ostrieti non classificabili':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(203,57,164,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Orno-ostrieto primitivo di falda detritica':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(106,212,164,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Orno-ostrieto primitivo di forra':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(223,124,94,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Orno-ostrieto primitivo di rupe':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(122,221,201,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Orno-ostrieto tipico':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(126,224,211,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Pecceta di sostituzione':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(154,210,35,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Pecceta montana dei substrati silicatici dei suoli mesici':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(83,134,206,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Pecceta secondaria montana':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(14,121,215,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Peccete non classificabili':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(97,226,217,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Piceo-faggeto dei substrati carbonatici':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(39,21,204,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Piceo-faggeto dei substrati silicatici var. con larice':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(75,226,128,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Pineta di pino silvestre dei substrati carbonatici':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(200,28,111,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Pineta di pino silvestre dei substrati silicatici submontana':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(61,56,207,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Pineta di pino silvestre planiziale':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(203,89,76,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Pioppeti di pioppo nero in via di naturalizzazione':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(158,81,221,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Querceti non classificabili':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(127,238,173,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Querceto di farnia con olmo':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(156,25,217,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Querceto di farnia dei dossi sabbiosi':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(218,102,40,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Querceto di rovere dei substrati carbonatici dei suoli mesici':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(231,134,65,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Querceto di rovere dei substrati carbonatici dei suoli mesici var. con castagno':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(40,231,59,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Querceto di rovere dei substrati silicatici dei suoli mesici':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(78,205,64,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Querceto di rovere dei substrati silicatici dei suoli xerici':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(215,234,90,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Querceto di rovere e/o farnia del pianalto':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(186,43,218,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Querceto di rovere e/o farnia delle cerchie moreniche occidentali':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(139,79,218,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Querceto di roverella dei substrati carbonatici':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(182,38,230,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Querceto primitivo di rovere su falda detritica':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(60,200,91,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Querco-carpineto collinare di rovere e/o farnia':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(212,52,87,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Querco-carpineto dell\'alta pianura':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(199,204,122,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Querco-carpineto della bassa pianura':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(205,16,70,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Rimboschimenti di conifere':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(80,224,85,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Rimboschimenti di latifoglie':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(227,214,25,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Rimboschimenti recenti DUSAF':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(49,18,204,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Robinieto misto':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(204,117,83,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Robinieto puro':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(144,214,130,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Saliceto a Salix caprea':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(213,140,71,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Saliceto a Salix cinerea':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(117,205,55,0.6)',
+                interactive: true,
+            }
+                    break;
+                case 'Saliceto di ripa':
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(206,238,109,0.6)',
+                interactive: true,
+            }
+                    break;
+                default:
+                    return {
+                pane: 'pane_tipologieforestali_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(214,199,102,0.6)',
+                interactive: true,
+            }
+                    break;
+            }
+        }
+        map.createPane('pane_tipologieforestali_2');
+        map.getPane('pane_tipologieforestali_2').style.zIndex = 402;
+        map.getPane('pane_tipologieforestali_2').style['mix-blend-mode'] = 'normal';
+        var layer_tipologieforestali_2 = new L.geoJson(json_tipologieforestali_2, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_tipologieforestali_2',
+            layerName: 'layer_tipologieforestali_2',
+            pane: 'pane_tipologieforestali_2',
+            onEachFeature: pop_tipologieforestali_2,
+            style: style_tipologieforestali_2_0,
+        });
+        bounds_group.addLayer(layer_tipologieforestali_2);
+        function pop_provinciaVarese_3(feature, layer) {
+            var popupContent = '<table>\
+                    <tr>\
+                        <th scope="row">DEN_PROV</th>\
+                        <td>' + (feature.properties['DEN_PROV'] !== null ? autolinker.link(String(feature.properties['DEN_PROV']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_provinciaVarese_3_0() {
+            return {
+                pane: 'pane_provinciaVarese_3',
+                opacity: 1,
+                color: 'rgba(174,174,174,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fillOpacity: 0,
+                interactive: false,
+            }
+        }
+        map.createPane('pane_provinciaVarese_3');
+        map.getPane('pane_provinciaVarese_3').style.zIndex = 403;
+        map.getPane('pane_provinciaVarese_3').style['mix-blend-mode'] = 'normal';
+        var layer_provinciaVarese_3 = new L.geoJson(json_provinciaVarese_3, {
+            attribution: '',
+            interactive: false,
+            dataVar: 'json_provinciaVarese_3',
+            layerName: 'layer_provinciaVarese_3',
+            pane: 'pane_provinciaVarese_3',
+            onEachFeature: pop_provinciaVarese_3,
+            style: style_provinciaVarese_3_0,
+        });
+        bounds_group.addLayer(layer_provinciaVarese_3);
+        function pop_comuniASFO_4(feature, layer) {
+            var popupContent = '<table>\
+                    <tr>\
+                        <th scope="row">COMUNE</th>\
+                        <td class="visible-with-data" id="COMUNE">' + (feature.properties['COMUNE'] !== null ? autolinker.link(String(feature.properties['COMUNE']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_comuniASFO_4_0() {
+            return {
+                pane: 'pane_comuniASFO_4',
+                opacity: 1,
+                color: 'rgba(255,0,0,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 2.0, 
+                fillOpacity: 0,
+                interactive: false,
+            }
+        }
+        map.createPane('pane_comuniASFO_4');
+        map.getPane('pane_comuniASFO_4').style.zIndex = 404;
+        map.getPane('pane_comuniASFO_4').style['mix-blend-mode'] = 'normal';
+        var layer_comuniASFO_4 = new L.geoJson(json_comuniASFO_4, {
+            attribution: '',
+            interactive: false,
+            dataVar: 'json_comuniASFO_4',
+            layerName: 'layer_comuniASFO_4',
+            pane: 'pane_comuniASFO_4',
+            onEachFeature: pop_comuniASFO_4,
+            style: style_comuniASFO_4_0,
+        });
+        bounds_group.addLayer(layer_comuniASFO_4);
+        map.addLayer(layer_comuniASFO_4);
+        function pop_cantieri_5(feature, layer) {
+            var popupContent = '<table>\
+                    <tr>\
+                        <th scope="row">nome</th>\
+                        <td class="visible-with-data" id="nome">' + (feature.properties['nome'] !== null ? autolinker.link(String(feature.properties['nome']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">data apertura</th>\
+                        <td class="visible-with-data" id="data apertura">' + (feature.properties['data apertura'] !== null ? autolinker.link(String(feature.properties['data apertura']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">data chiusura</th>\
+                        <td class="visible-with-data" id="data chiusura">' + (feature.properties['data chiusura'] !== null ? autolinker.link(String(feature.properties['data chiusura']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">foto</th>\
+                        <td>' + (feature.properties['foto'] !== null ? '<img src="images/' + String(feature.properties['foto']).replace(/[\\/:]/g, '_').trim().replace(/'/g, '\'').replace(/"/g, '&quot;') + '">' : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">note</th>\
+                        <td class="visible-with-data" id="note">' + (feature.properties['note'] !== null ? autolinker.link(String(feature.properties['note']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">link</th>\
+                        <td class="visible-with-data" id="link">' + (feature.properties['link'] !== null ? autolinker.link(String(feature.properties['link']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_cantieri_5_0() {
+            return {
+                pane: 'pane_cantieri_5',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(145,255,0,0.6)',
+                interactive: true,
+            }
+        }
+        map.createPane('pane_cantieri_5');
+        map.getPane('pane_cantieri_5').style.zIndex = 405;
+        map.getPane('pane_cantieri_5').style['mix-blend-mode'] = 'normal';
+        var layer_cantieri_5 = new L.geoJson(json_cantieri_5, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_cantieri_5',
+            layerName: 'layer_cantieri_5',
+            pane: 'pane_cantieri_5',
+            onEachFeature: pop_cantieri_5,
+            style: style_cantieri_5_0,
+        });
+        bounds_group.addLayer(layer_cantieri_5);
+        map.addLayer(layer_cantieri_5);
+        function pop_sentieri_OSM_6(feature, layer) {
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['fid'] !== null ? autolinker.link(String(feature.properties['fid']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['full_id'] !== null ? autolinker.link(String(feature.properties['full_id']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['osm_id'] !== null ? autolinker.link(String(feature.properties['osm_id']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['osm_type'] !== null ? autolinker.link(String(feature.properties['osm_type']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['highway'] !== null ? autolinker.link(String(feature.properties['highway']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['obstacle'] !== null ? autolinker.link(String(feature.properties['obstacle']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['ramp'] !== null ? autolinker.link(String(feature.properties['ramp']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['mtb:name'] !== null ? autolinker.link(String(feature.properties['mtb:name']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['description:it'] !== null ? autolinker.link(String(feature.properties['description:it']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['informal'] !== null ? autolinker.link(String(feature.properties['informal']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['maxspeed:forward'] !== null ? autolinker.link(String(feature.properties['maxspeed:forward']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['lit'] !== null ? autolinker.link(String(feature.properties['lit']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['handrail'] !== null ? autolinker.link(String(feature.properties['handrail']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['sidewalk'] !== null ? autolinker.link(String(feature.properties['sidewalk']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['oneway'] !== null ? autolinker.link(String(feature.properties['oneway']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['loc_name'] !== null ? autolinker.link(String(feature.properties['loc_name']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['check_date:surface'] !== null ? autolinker.link(String(feature.properties['check_date:surface']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['symbol'] !== null ? autolinker.link(String(feature.properties['symbol']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['mtb:scale:imba'] !== null ? autolinker.link(String(feature.properties['mtb:scale:imba']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['vehicle'] !== null ? autolinker.link(String(feature.properties['vehicle']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['abandoned:highway'] !== null ? autolinker.link(String(feature.properties['abandoned:highway']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['ford'] !== null ? autolinker.link(String(feature.properties['ford']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['incline'] !== null ? autolinker.link(String(feature.properties['incline']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['description'] !== null ? autolinker.link(String(feature.properties['description']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['bridge'] !== null ? autolinker.link(String(feature.properties['bridge']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['maxweight'] !== null ? autolinker.link(String(feature.properties['maxweight']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['hour_on'] !== null ? autolinker.link(String(feature.properties['hour_on']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['hour_off'] !== null ? autolinker.link(String(feature.properties['hour_off']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['goods'] !== null ? autolinker.link(String(feature.properties['goods']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['maxspeed'] !== null ? autolinker.link(String(feature.properties['maxspeed']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['mapillary'] !== null ? autolinker.link(String(feature.properties['mapillary']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['motorcycle'] !== null ? autolinker.link(String(feature.properties['motorcycle']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['tunnel'] !== null ? autolinker.link(String(feature.properties['tunnel']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['layer'] !== null ? autolinker.link(String(feature.properties['layer']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['access'] !== null ? autolinker.link(String(feature.properties['access']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['mtb'] !== null ? autolinker.link(String(feature.properties['mtb']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['trailblazed'] !== null ? autolinker.link(String(feature.properties['trailblazed']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['alt_name'] !== null ? autolinker.link(String(feature.properties['alt_name']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['railway'] !== null ? autolinker.link(String(feature.properties['railway']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['horse'] !== null ? autolinker.link(String(feature.properties['horse']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['width'] !== null ? autolinker.link(String(feature.properties['width']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['mtb:type'] !== null ? autolinker.link(String(feature.properties['mtb:type']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['loc_ref'] !== null ? autolinker.link(String(feature.properties['loc_ref']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['class:bicycle:mtb'] !== null ? autolinker.link(String(feature.properties['class:bicycle:mtb']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['sac_scale_ref'] !== null ? autolinker.link(String(feature.properties['sac_scale_ref']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['mtb:scale:uphill'] !== null ? autolinker.link(String(feature.properties['mtb:scale:uphill']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['trail_visibility'] !== null ? autolinker.link(String(feature.properties['trail_visibility']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['sac_scale'] !== null ? autolinker.link(String(feature.properties['sac_scale']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['smoothness'] !== null ? autolinker.link(String(feature.properties['smoothness']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['mtb:scale'] !== null ? autolinker.link(String(feature.properties['mtb:scale']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['motor_vehicle'] !== null ? autolinker.link(String(feature.properties['motor_vehicle']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['foot'] !== null ? autolinker.link(String(feature.properties['foot']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['bicycle'] !== null ? autolinker.link(String(feature.properties['bicycle']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['agricultural'] !== null ? autolinker.link(String(feature.properties['agricultural']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['tracktype'] !== null ? autolinker.link(String(feature.properties['tracktype']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['surface'] !== null ? autolinker.link(String(feature.properties['surface']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['name'] !== null ? autolinker.link(String(feature.properties['name']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['maxwidth'] !== null ? autolinker.link(String(feature.properties['maxwidth']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['path'] !== null ? autolinker.link(String(feature.properties['path']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_sentieri_OSM_6_0() {
+            return {
+                pane: 'pane_sentieri_OSM_6',
+                opacity: 1,
+                color: 'rgba(255,160,0,1.0)',
+                dashArray: '',
+                lineCap: 'round',
+                lineJoin: 'round',
+                weight: 2.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+        }
+        map.createPane('pane_sentieri_OSM_6');
+        map.getPane('pane_sentieri_OSM_6').style.zIndex = 406;
+        map.getPane('pane_sentieri_OSM_6').style['mix-blend-mode'] = 'normal';
+        var layer_sentieri_OSM_6 = new L.geoJson(json_sentieri_OSM_6, {
+            attribution: '',
+            interactive: false,
+            dataVar: 'json_sentieri_OSM_6',
+            layerName: 'layer_sentieri_OSM_6',
+            pane: 'pane_sentieri_OSM_6',
+            onEachFeature: pop_sentieri_OSM_6,
+            style: style_sentieri_OSM_6_0,
+        });
+        bounds_group.addLayer(layer_sentieri_OSM_6);
+        var osmGeocoder = new L.Control.Geocoder({
+            collapsed: true,
+            position: 'topleft',
+            text: 'Search',
+            title: 'Testing'
+        }).addTo(map);
+        document.getElementsByClassName('leaflet-control-geocoder-icon')[0]
+        .className += ' fa fa-search';
+        document.getElementsByClassName('leaflet-control-geocoder-icon')[0]
+        .title += 'Search for a place';
+        var overlaysTree = [
+            {label: '<img src="legend/sentieri_OSM_6.png" /> sentieri_OSM', layer: layer_sentieri_OSM_6},
+            {label: '<img src="legend/cantieri_5.png" /> cantieri', layer: layer_cantieri_5},
+        {label: '<b>confini amministrativi</b>', selectAllCheckbox: true, children: [
+            {label: '<img src="legend/comuniASFO_4.png" /> comuni ASFO', layer: layer_comuniASFO_4},
+            {label: '<img src="legend/provinciaVarese_3.png" /> provincia Varese', layer: layer_provinciaVarese_3},]},
+            {label: 'tipologie forestali<br /><table><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_AcerifrassinetiedAceritiglietinonclassificabili0.png" /></td><td>Aceri-frassineti ed Aceri-tiglieti non classificabili</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Acerifrassinetoconfaggio1.png" /></td><td>Aceri-frassineto con faggio</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Acerifrassinetoconontanobianco2.png" /></td><td>Aceri-frassineto con ontano bianco</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Acerifrassinetoconostria3.png" /></td><td>Aceri-frassineto con ostria</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Acerifrassinetotipico4.png" /></td><td>Aceri-frassineto tipico</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Acerifrassinetotipicovarconcarpinobianco5.png" /></td><td>Aceri-frassineto tipico var. con carpino bianco</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Acerifrassinetotipicovarconrovere6.png" /></td><td>Aceri-frassineto tipico var. con rovere</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Acerifrassinetotipicovarcontigli7.png" /></td><td>Aceri-frassineto tipico var. con tigli</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Aceritiglieto8.png" /></td><td>Aceri-tiglieto</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Alnetodiontanobianco9.png" /></td><td>Alneto di ontano bianco</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Alnetodiontanonerodimpluvio10.png" /></td><td>Alneto di ontano nero d\'impluvio</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Alnetodiontanoneroperilacustre11.png" /></td><td>Alneto di ontano nero perilacustre</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Alnetodiontanonerotipico12.png" /></td><td>Alneto di ontano nero tipico</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Areeboscatenonclassificate13.png" /></td><td>Aree boscate non classificate</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_BetuletieCoriletinonclassificabili14.png" /></td><td>Betuleti e Corileti non classificabili</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Betuletoprimitivo15.png" /></td><td>Betuleto primitivo</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Betuletosecondario16.png" /></td><td>Betuleto secondario</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_BoschidiconifereadensitabassaDUSAF17.png" /></td><td>Boschi di conifere a densita\' bassa DUSAF</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_BoschidiconifereadensitamediaealtaDUSAF18.png" /></td><td>Boschi di conifere a densita\' media e alta DUSAF</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_BoschidilatifoglieadensitabassaDUSAF19.png" /></td><td>Boschi di latifoglie a densita\' bassa DUSAF</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_BoschidilatifoglieadensitamediaealtaDUSAF20.png" /></td><td>Boschi di latifoglie a densita\' media e alta DUSAF</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_BoschimistiadensitamediaealtaDUSAF21.png" /></td><td>Boschi misti a densita\' media e alta DUSAF</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Carpinetoconostria22.png" /></td><td>Carpineto con ostria</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Castagnetinonclassificabili23.png" /></td><td>Castagneti non classificabili</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Castagnetodeisubstraticarbonaticideisuolimesici24.png" /></td><td>Castagneto dei substrati carbonatici dei suoli mesici</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Castagnetodeisubstraticarbonaticideisuolimesoxerici25.png" /></td><td>Castagneto dei substrati carbonatici dei suoli mesoxerici</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Castagnetodeisubstraticarbonaticideisuolixerici26.png" /></td><td>Castagneto dei substrati carbonatici dei suoli xerici</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Castagnetodeisubstratisilicaticideisuolimesici27.png" /></td><td>Castagneto dei substrati silicatici dei suoli mesici</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Castagnetodeisubstratisilicaticideisuolimesoxerici28.png" /></td><td>Castagneto dei substrati silicatici dei suoli mesoxerici</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Castagnetodeisubstratisilicaticideisuolixerici29.png" /></td><td>Castagneto dei substrati silicatici dei suoli xerici</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Castagnetodellecerchiemorenicheoccidentali30.png" /></td><td>Castagneto delle cerchie moreniche occidentali</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Castagnetodellecerchiemorenicheoccidentalivarconfarnia31.png" /></td><td>Castagneto delle cerchie moreniche occidentali var. con farnia</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Castagnetodifaldadetritica32.png" /></td><td>Castagneto di falda detritica</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Cerreta33.png" /></td><td>Cerreta</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_CespuglieticonpresenzasignificativadispeciearbustivealteedarboreeDUSAF34.png" /></td><td>Cespuglieti con presenza significativa di specie arbustive alte ed arboree DUSAF</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Corileto35.png" /></td><td>Corileto</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Faggetamontanadeisubstraticarbonaticitipica36.png" /></td><td>Faggeta montana dei substrati carbonatici tipica</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Faggetamontanadeisubstraticarbonaticitipicavarconabeterosso37.png" /></td><td>Faggeta montana dei substrati carbonatici tipica var. con abete rosso</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Faggetamontanadeisubstratisilicaticideisuoliacidi38.png" /></td><td>Faggeta montana dei substrati silicatici dei suoli acidi</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Faggetamontanadeisubstratisilicaticideisuolimesici39.png" /></td><td>Faggeta montana dei substrati silicatici dei suoli mesici</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Faggetaprimitiva40.png" /></td><td>Faggeta primitiva</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Faggetasubmontanadeisubstraticarbonatici41.png" /></td><td>Faggeta submontana dei substrati carbonatici</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Faggetasubmontanadeisubstraticarbonaticivardeisuolimesici42.png" /></td><td>Faggeta submontana dei substrati carbonatici var. dei suoli mesici</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Faggetasubmontanadeisubstratisilicatici43.png" /></td><td>Faggeta submontana dei substrati silicatici</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Faggetasubmontanadeisubstratisilicaticivarconcastagno44.png" /></td><td>Faggeta submontana dei substrati silicatici var. con castagno</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Faggetenonclassificabili45.png" /></td><td>Faggete non classificabili</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Formazioniadominanzadilatifogliealloctone46.png" /></td><td>Formazioni a dominanza di latifoglie alloctone</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Formazioniantropogenenonclassificabili47.png" /></td><td>Formazioni antropogene non classificabili</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Formazioniarbustiveaginepronano48.png" /></td><td>Formazioni arbustive a ginepro nano</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Formazionidiciliegiotardivo49.png" /></td><td>Formazioni di ciliegio tardivo</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Formazionidipioppotremulo50.png" /></td><td>Formazioni di pioppo tremulo</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Formazionidisorbodegliuccellatori51.png" /></td><td>Formazioni di sorbo degli uccellatori</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Formazioniparticolarinonclassificabili52.png" /></td><td>Formazioni particolari non classificabili</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_FormazioniriparialiDUSAF53.png" /></td><td>Formazioni ripariali DUSAF</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Laricetotipico54.png" /></td><td>Lariceto tipico</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Ornoostrietinonclassificabili55.png" /></td><td>Orno-ostrieti non classificabili</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Ornoostrietoprimitivodifaldadetritica56.png" /></td><td>Orno-ostrieto primitivo di falda detritica</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Ornoostrietoprimitivodiforra57.png" /></td><td>Orno-ostrieto primitivo di forra</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Ornoostrietoprimitivodirupe58.png" /></td><td>Orno-ostrieto primitivo di rupe</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Ornoostrietotipico59.png" /></td><td>Orno-ostrieto tipico</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Peccetadisostituzione60.png" /></td><td>Pecceta di sostituzione</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Peccetamontanadeisubstratisilicaticideisuolimesici61.png" /></td><td>Pecceta montana dei substrati silicatici dei suoli mesici</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Peccetasecondariamontana62.png" /></td><td>Pecceta secondaria montana</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Peccetenonclassificabili63.png" /></td><td>Peccete non classificabili</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Piceofaggetodeisubstraticarbonatici64.png" /></td><td>Piceo-faggeto dei substrati carbonatici</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Piceofaggetodeisubstratisilicaticivarconlarice65.png" /></td><td>Piceo-faggeto dei substrati silicatici var. con larice</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Pinetadipinosilvestredeisubstraticarbonatici66.png" /></td><td>Pineta di pino silvestre dei substrati carbonatici</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Pinetadipinosilvestredeisubstratisilicaticisubmontana67.png" /></td><td>Pineta di pino silvestre dei substrati silicatici submontana</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Pinetadipinosilvestreplaniziale68.png" /></td><td>Pineta di pino silvestre planiziale</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Pioppetidipiopponeroinviadinaturalizzazione69.png" /></td><td>Pioppeti di pioppo nero in via di naturalizzazione</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Quercetinonclassificabili70.png" /></td><td>Querceti non classificabili</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Quercetodifarniaconolmo71.png" /></td><td>Querceto di farnia con olmo</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Quercetodifarniadeidossisabbiosi72.png" /></td><td>Querceto di farnia dei dossi sabbiosi</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Quercetodiroveredeisubstraticarbonaticideisuolimesici73.png" /></td><td>Querceto di rovere dei substrati carbonatici dei suoli mesici</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Quercetodiroveredeisubstraticarbonaticideisuolimesicivarconcastagno74.png" /></td><td>Querceto di rovere dei substrati carbonatici dei suoli mesici var. con castagno</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Quercetodiroveredeisubstratisilicaticideisuolimesici75.png" /></td><td>Querceto di rovere dei substrati silicatici dei suoli mesici</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Quercetodiroveredeisubstratisilicaticideisuolixerici76.png" /></td><td>Querceto di rovere dei substrati silicatici dei suoli xerici</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Quercetodirovereeofarniadelpianalto77.png" /></td><td>Querceto di rovere e/o farnia del pianalto</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Quercetodirovereeofarniadellecerchiemorenicheoccidentali78.png" /></td><td>Querceto di rovere e/o farnia delle cerchie moreniche occidentali</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Quercetodiroverelladeisubstraticarbonatici79.png" /></td><td>Querceto di roverella dei substrati carbonatici</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Quercetoprimitivodiroveresufaldadetritica80.png" /></td><td>Querceto primitivo di rovere su falda detritica</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Quercocarpinetocollinaredirovereeofarnia81.png" /></td><td>Querco-carpineto collinare di rovere e/o farnia</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Quercocarpinetodellaltapianura82.png" /></td><td>Querco-carpineto dell\'alta pianura</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Quercocarpinetodellabassapianura83.png" /></td><td>Querco-carpineto della bassa pianura</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Rimboschimentidiconifere84.png" /></td><td>Rimboschimenti di conifere</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Rimboschimentidilatifoglie85.png" /></td><td>Rimboschimenti di latifoglie</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_RimboschimentirecentiDUSAF86.png" /></td><td>Rimboschimenti recenti DUSAF</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Robinietomisto87.png" /></td><td>Robinieto misto</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Robinietopuro88.png" /></td><td>Robinieto puro</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_SalicetoaSalixcaprea89.png" /></td><td>Saliceto a Salix caprea</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_SalicetoaSalixcinerea90.png" /></td><td>Saliceto a Salix cinerea</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_Salicetodiripa91.png" /></td><td>Saliceto di ripa</td></tr><tr><td style="text-align: center;"><img src="legend/tipologieforestali_2_92.png" /></td><td></td></tr></table>', layer: layer_tipologieforestali_2},
+        {label: '<b>basemap</b>', selectAllCheckbox: true, children: [
+            {label: "Google Satellite", layer: layer_GoogleSatellite_1},
+            {label: "OpenStreetMap", layer: layer_OpenStreetMap_0},]},]
+        var lay = L.control.layers.tree(null, overlaysTree,{
+            //namedToggle: true,
+            //selectorBack: false,
+            //closedSymbol: '&#8862; &#x1f5c0;',
+            //openedSymbol: '&#8863; &#x1f5c1;',
+            //collapseAll: 'Collapse all',
+            //expandAll: 'Expand all',
+            collapsed: true,
+        });
+        lay.addTo(map);
+        setBounds();
+        var i = 0;
+        layer_comuniASFO_4.eachLayer(function(layer) {
+            var context = {
+                feature: layer.feature,
+                variables: {}
+            };
+            layer.bindTooltip((layer.feature.properties['COMUNE'] !== null?String('<div style="color: #faffbd; font-size: 10pt; font-weight: bold; font-family: \'Arial\', sans-serif;">' + layer.feature.properties['COMUNE']) + '</div>':''), {permanent: true, offset: [-0, -16], className: 'css_comuniASFO_4'});
+            labels.push(layer);
+            totalMarkers += 1;
+              layer.added = true;
+              addLabel(layer, i);
+              i++;
+        });
+        resetLabels([layer_comuniASFO_4,layer_cantieri_5]);
+        map.on("zoomend", function(){
+            resetLabels([layer_comuniASFO_4,layer_cantieri_5]);
+        });
+        map.on("layeradd", function(){
+            resetLabels([layer_comuniASFO_4,layer_cantieri_5]);
+        });
+        map.on("layerremove", function(){
+            resetLabels([layer_comuniASFO_4,layer_cantieri_5]);
+        });
+        </script>
+    </body>
+</html>
